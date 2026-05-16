@@ -105,9 +105,8 @@ function dedupeResults(items: CompanyMatch[]): CompanyMatch[] {
   });
 }
 
-function extractResults(html: string, limit = 10): CompanyMatch[] {
-  const allMatches: CompanyMatch[] = [];
-  const regex = /<a[^>]*class="result__a"[^>]*href="([^"]+)"[^>]*>([\s\S]*?)<\/a>/g;
+function extractFromPattern(html: string, regex: RegExp): CompanyMatch[] {
+  const matches: CompanyMatch[] = [];
 
   for (const match of html.matchAll(regex)) {
     const href = normalizeDuckDuckGoUrl(match[1]);
@@ -124,7 +123,7 @@ function extractResults(html: string, limit = 10): CompanyMatch[] {
       }
     })();
 
-    allMatches.push({
+    matches.push({
       title,
       url: href,
       source,
@@ -132,7 +131,21 @@ function extractResults(html: string, limit = 10): CompanyMatch[] {
     });
   }
 
-  const deduped = dedupeResults(allMatches);
+  return matches;
+}
+
+function extractResults(html: string, limit = 10): CompanyMatch[] {
+  const htmlResults = extractFromPattern(
+    html,
+    /<a[^>]*class="result__a"[^>]*href="([^"]+)"[^>]*>([\s\S]*?)<\/a>/g
+  );
+
+  const liteResults = extractFromPattern(
+    html,
+    /<a[^>]*class="result-link"[^>]*href="([^"]+)"[^>]*>([\s\S]*?)<\/a>/g
+  );
+
+  const deduped = dedupeResults([...htmlResults, ...liteResults]);
   const careerLike = deduped.filter((item) => isCareerLikeResult(item.title, item.url));
   const prioritized = careerLike.length > 0 ? careerLike : deduped;
 
@@ -156,6 +169,46 @@ function buildQuery(body: SearchBody): string {
   return `${role} hiring careers ${strengths} ${requirementHint}`.replace(/\s+/g, ' ').trim();
 }
 
+async function fetchDuckDuckGoPage(query: string): Promise<{ html: string; endpoint: string } | null> {
+  const endpoints = [
+    `https://duckduckgo.com/html/?q=${encodeURIComponent(query)}`,
+    `https://lite.duckduckgo.com/lite/?q=${encodeURIComponent(query)}`,
+  ];
+
+  for (const endpoint of endpoints) {
+    try {
+      const response = await fetch(endpoint, {
+        method: 'GET',
+        headers: {
+          'User-Agent':
+            'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
+          Accept: 'text/html,application/xhtml+xml',
+          'Accept-Language': 'en-US,en;q=0.9',
+          Referer: 'https://duckduckgo.com/',
+        },
+        redirect: 'follow',
+        cache: 'no-store',
+      });
+
+      if (!response.ok) {
+        continue;
+      }
+
+      const html = await response.text();
+      const hasResultMarkers =
+        html.includes('result__a') || html.includes('result-link') || html.includes('duckduckgo');
+
+      if (hasResultMarkers) {
+        return { html, endpoint };
+      }
+    } catch {
+      // try next endpoint
+    }
+  }
+
+  return null;
+}
+
 export async function POST(req: NextRequest) {
   try {
     const body = (await req.json()) as SearchBody;
@@ -165,25 +218,25 @@ export async function POST(req: NextRequest) {
     }
 
     const query = buildQuery(body);
-    const url = `https://duckduckgo.com/html/?q=${encodeURIComponent(query)}`;
+    const searchPage = await fetchDuckDuckGoPage(query);
 
-    const response = await fetch(url, {
-      method: 'GET',
-      headers: {
-        'User-Agent':
-          'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
-      },
-      cache: 'no-store',
-    });
-
-    if (!response.ok) {
-      return NextResponse.json({ error: 'DuckDuckGo search is temporarily unavailable.' }, { status: 502 });
+    if (!searchPage) {
+      return NextResponse.json(
+        {
+          error:
+            'DuckDuckGo is blocking this server right now. Please retry in 1-2 minutes or provide your DuckDuckGo repo so I can switch to your working adapter.',
+        },
+        { status: 502 }
+      );
     }
 
-    const html = await response.text();
-    const results = extractResults(html, 10);
+    const results = extractResults(searchPage.html, 10);
 
-    return NextResponse.json({ query, results });
+    return NextResponse.json({
+      query,
+      endpointUsed: searchPage.endpoint,
+      results,
+    });
   } catch (error) {
     console.error('Company search error:', error);
     return NextResponse.json({ error: 'Failed to search matching companies.' }, { status: 500 });
