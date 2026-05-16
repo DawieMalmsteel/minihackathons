@@ -137,9 +137,9 @@ export default function UploadForm({ onSubmit, isLoading }: UploadFormProps) {
       <button
         type="submit"
         disabled={!file || !role.trim() || isLoading}
-        className="mt-6 w-full rounded-xl border border-lime-200/45 bg-[var(--accent)] px-4 py-3.5 text-sm font-bold uppercase tracking-[0.16em] text-[#0f1108] transition hover:-translate-y-0.5 hover:brightness-105 disabled:cursor-not-allowed disabled:opacity-45"
+        className="mt-6 w-full rounded-xl border border-lime-200/50 bg-gradient-to-r from-[#2f420a] via-[#4e6913] to-[#6a891a] px-4 py-3.5 text-base font-semibold tracking-[0.04em] text-[#f8ffd7] shadow-[0_8px_24px_rgba(213,255,95,0.22)] transition hover:-translate-y-0.5 hover:from-[#3c5410] hover:via-[#5b7818] hover:to-[#75971f] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-lime-200/70 disabled:cursor-not-allowed disabled:opacity-45"
       >
-        {isLoading ? 'Analyzing dossier...' : 'Roast this CV'}
+        {isLoading ? 'Processing CV...' : 'Roast this CV'}
       </button>
     </form>
   );

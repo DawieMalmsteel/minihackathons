@@ -42,16 +42,30 @@ export default function LoadingState() {
               return (
                 <div
                   key={step.text}
-                  className={`flex items-center gap-3 rounded-lg border px-3 py-2 text-sm transition ${
+                  className={`flex items-center justify-between gap-3 rounded-xl border px-3.5 py-2.5 text-sm transition-all ${
                     isDone
-                      ? 'border-lime-300/25 bg-lime-300/5 text-lime-200'
+                      ? 'border-lime-300/30 bg-lime-300/10 text-lime-100'
                       : isActive
-                      ? 'border-[#3f4150] bg-[#1a1a22] text-[#f0ead7]'
-                      : 'border-transparent text-[#8a8578]'
+                      ? 'border-[#5b5f74] bg-[#1c1d27] text-[#f6efdc] shadow-[0_0_0_1px_rgba(213,255,95,0.15)]'
+                      : 'border-[#2e313f] bg-[#151720] text-[#9d9788]'
                   }`}
                 >
-                  <Icon size={15} className={isActive ? 'animate-pulse' : ''} />
-                  <span>{step.text}</span>
+                  <div className="flex items-center gap-2.5">
+                    <Icon size={15} className={isActive ? 'animate-pulse text-[var(--accent)]' : ''} />
+                    <span>{step.text}</span>
+                  </div>
+
+                  <span
+                    className={`rounded-full border px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.1em] ${
+                      isDone
+                        ? 'border-lime-300/40 bg-lime-300/20 text-lime-100'
+                        : isActive
+                        ? 'border-[var(--accent)]/45 bg-[var(--accent)]/15 text-[#f4ffce]'
+                        : 'border-[#3a3d4d] bg-[#222431] text-[#a59f8f]'
+                    }`}
+                  >
+                    {isDone ? 'Done' : isActive ? 'Processing' : 'Queued'}
+                  </span>
                 </div>
               );
             })}

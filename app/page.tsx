@@ -6,12 +6,15 @@ import UploadForm from '@/components/UploadForm';
 import LoadingState from '@/components/LoadingState';
 import ScoreCard from '@/components/ScoreCard';
 import AnalysisSections from '@/components/AnalysisSections';
+import CompanySearchCard from '@/components/CompanySearchCard';
 import { AnalysisResponse } from '@/lib/types';
 
 export default function Home() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [result, setResult] = useState<AnalysisResponse | null>(null);
+  const [lastRole, setLastRole] = useState('');
+  const [lastRecruiterRequirements, setLastRecruiterRequirements] = useState('');
 
   const handleAnalyze = async (
     file: File,
@@ -41,6 +44,8 @@ export default function Home() {
       }
 
       setResult(data);
+      setLastRole(role);
+      setLastRecruiterRequirements(recruiterRequirements);
     } catch (error: unknown) {
       setError(error instanceof Error ? error.message : 'Unexpected error');
     } finally {
@@ -108,6 +113,12 @@ export default function Home() {
             ) : result ? (
               <div className="space-y-6">
                 <ScoreCard data={result} />
+                <CompanySearchCard
+                  role={lastRole}
+                  recruiterRequirements={lastRecruiterRequirements}
+                  strengths={result.strengths}
+                  missingKeywords={result.missingKeywords}
+                />
                 <AnalysisSections data={result} />
               </div>
             ) : (
