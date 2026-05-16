@@ -72,7 +72,7 @@ export default function CompanySearchCard({
           className="inline-flex items-center gap-2 rounded-xl border border-lime-200/50 bg-gradient-to-r from-[#2f420a] via-[#4e6913] to-[#6a891a] px-4 py-2.5 text-sm font-semibold tracking-[0.04em] text-[#f8ffd7] shadow-[0_8px_24px_rgba(213,255,95,0.22)] transition hover:-translate-y-0.5 hover:from-[#3c5410] hover:via-[#5b7818] hover:to-[#75971f] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-lime-200/70 disabled:cursor-not-allowed disabled:opacity-45"
         >
           {isLoading ? <Loader2 size={15} className="animate-spin" /> : <Search size={15} />}
-          {isLoading ? 'Searching web...' : 'Search with DuckDuckGo'}
+          {isLoading ? 'Searching web...' : 'Search company for this CV'}
         </button>
       </div>
 
